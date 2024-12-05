@@ -174,7 +174,7 @@ public class KafkaConsumerClient : IConsumerClient
             headers.Add(header.Key, val != null ? Encoding.UTF8.GetString(val) : null);
         }
 
-        headers.Add(Headers.Group, _groupId);
+        headers[Headers.Group] = _groupId;
 
         if (_kafkaOptions.CustomHeadersBuilder != null)
         {
