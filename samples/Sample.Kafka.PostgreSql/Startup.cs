@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
 
 namespace Sample.Kafka.PostgreSql
 {
@@ -15,8 +16,25 @@ namespace Sample.Kafka.PostgreSql
                 x.UsePostgreSql(DbConnectionString);
 
                 //docker run --name kafka -p 9092:9092 -d bashj79/kafka-kraft
-                x.UseKafka("localhost:9092");
+                x.UseKafka(kafkaOptions =>
+                {
+                    kafkaOptions.Servers = "localhost:9092";
+
+                    kafkaOptions.CustomHeadersBuilder = (result, provider) =>
+                    {
+                        List<KeyValuePair<string, string>> headers = new()
+                    {
+                        new("kafka.partition", result.Partition.ToString()),
+                        new("kafka.offset", result.Offset.ToString())
+                    };
+
+
+                        return headers;
+                    };
+
+                });
                 x.UseDashboard();
+                x.ConsumerThreadCount = 4;
             });
 
             services.AddControllers();

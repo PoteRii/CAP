@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using DotNetCore.CAP;
@@ -24,7 +25,7 @@ namespace Sample.Kafka.PostgreSql.Controllers
             await bootstrapper.DisposeAsync();
             return Ok();
         }
-         
+
 
         [Route("~/delay/{delaySeconds:int}")]
         public async Task<IActionResult> Delay(int delaySeconds)
@@ -65,10 +66,26 @@ namespace Sample.Kafka.PostgreSql.Controllers
         }
 
 
-        [CapSubscribe("sample.kafka.postgrsql")]
-        public void Test2(DateTime value)
+        [CapSubscribe("sample.kafka.postgrsql", Group = "group1", GroupConcurrent = 1)]
+        public async Task Test2(DateTime value, CancellationToken cancellationToken, [FromCap] CapHeader header)
         {
+            Console.WriteLine($"Starting processing offset {header["kafka.offset"]} partition {header["kafka.partition"]}");
+
             Console.WriteLine("Subscriber output message: " + value);
+            await Task.Delay(30000, cancellationToken);
+
+            Console.WriteLine($"Finished processing offset {header["kafka.offset"]} partition {header["kafka.partition"]}");
+        }
+
+        [CapSubscribe("sample.kafka.postgrsql2", Group = "group1", GroupConcurrent = 1)]
+        public async Task Test3(DateTime value, CancellationToken cancellationToken, [FromCap] CapHeader header)
+        {
+            Console.WriteLine($"Starting processing offset {header["kafka.offset"]} partition {header["kafka.partition"]}");
+
+            Console.WriteLine("Subscriber output message: " + value);
+            await Task.Delay(30000, cancellationToken);
+
+            Console.WriteLine($"Finished processing offset {header["kafka.offset"]} partition {header["kafka.partition"]}");
         }
     }
 }
